@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Sign In — DrawnNightfall</title>
+
+    <meta
+        name="description"
+        content="Sign in to your DrawnNightfall account to sync your watchlist, compare films, and get personalized recommendations."
+    >
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+
+<body class="auth-body">
+
+    <!-- Ambient background lights -->
+    <div class="auth-ambient-glow top-center"></div>
+    <div class="auth-ambient-glow bottom-left"></div>
+
+    <!-- Header bar -->
+    <header class="auth-header-bar">
+        <a href="/" class="logo">
+            Drawn<span>Nightfall</span>
+        </a>
+
+        <a href="/" class="auth-back-link">
+            <span>←</span> Back to Movies
+        </a>
+    </header>
+
+    <!-- Main Container -->
+    <main class="auth-main-container">
+
+        <div class="auth-card-wrapper">
+
+            <div class="auth-card">
+
+                <div class="auth-card-header">
+                    <span class="auth-badge">🎬 CINEMATIC ACCESS</span>
+                    <h1 class="auth-card-title">Welcome Back</h1>
+                    <p class="auth-card-subtitle">
+                        Sign in to access your curated watchlist and movie journey.
+                    </p>
+                </div>
+
+                <!-- Quick Demo Login Helper -->
+                <div class="demo-account-box">
+                    <div class="demo-info">
+                        <span class="demo-tag">⚡ Quick Test</span>
+                        <span class="demo-credentials">
+                            <strong>demo</strong> / <strong>password123</strong>
+                        </span>
+                    </div>
+                    <button type="button" class="demo-btn" id="demoAutofillBtn">
+                        Fill Demo
+                    </button>
+                </div>
+
+                <!-- Flash alerts -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="auth-alerts">
+                            {% for category, message in messages %}
+                                <div class="auth-alert auth-alert-{{ category }}">
+                                    <span>
+                                        {% if category == 'success' %}✓{% elif category == 'error' %}⚠️{% else %}ℹ️{% endif %}
+                                    </span>
+                                    <span>{{ message }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Sign In Form -->
+                <form class="auth-form" method="POST" action="/signin" autocomplete="on">
+
+                    {% if request.args.get('next') %}
+                        <input type="hidden" name="next" value="{{ request.args.get('next') }}">
+                    {% endif %}
+
+                    <div class="form-field">
+                        <label for="identifier">
+                            Username or Email <span class="required-star">*</span>
+                        </label>
+                        <div class="input-with-icon">
+                            <input
+                                type="text"
+                                id="identifier"
+                                name="identifier"
+                                placeholder="e.g. cinephile or you@example.com"
+                                value="{{ identifier or '' }}"
+                                required
+                                autofocus
+                                autocomplete="username"
+                            >
+                            <span class="input-icon">👤</span>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="password">
+                            Password <span class="required-star">*</span>
+                        </label>
+                        <div class="input-with-icon">
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Enter your password"
+                                required
+                                autocomplete="current-password"
+                            >
+                            <span class="input-icon">🔒</span>
+                            <button
+                                type="button"
+                                class="password-toggle-btn"
+                                data-target="password"
+                                title="Show password"
+                                aria-label="Show password"
+                            >
+                                👁️
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="auth-options-row">
+                        <label class="auth-checkbox-label">
+                            <input type="checkbox" name="remember" checked>
+                            <span>Keep me signed in</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="primary-button auth-submit-btn">
+                        Sign In
+                    </button>
+
+                </form>
+
+                <div class="auth-card-footer">
+                    Don't have an account yet?
+                    <a href="/signup">Sign Up</a>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+</body>
+</html>
