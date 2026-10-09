@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Discover Movies — DrawnNightfall</title>
+
+    <meta
+        name="description"
+        content="Discover movies and TV shows using powerful filters on DrawnNightfall."
+    >
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/discover.css') }}">
+</head>
+
+<body>
+
+    <!-- =========================
+         NAVBAR
+    ========================== -->
+    <header class="navbar">
+
+        <div class="nav-container">
+
+            <a href="/" class="logo">
+                Drawn<span>Nightfall</span>
+            </a>
+
+            <nav class="nav-links" aria-label="Main navigation">
+
+                <a href="/">
+                    Home
+                </a>
+
+                <a href="/discover" class="active">
+                    Discover
+                </a>
+
+                <a href="/roulette">
+                    Roulette
+                </a>
+
+                <a href="/mood">
+                    Mood
+                </a>
+
+                <a href="/compare">
+                    Compare
+                </a>
+
+                <a href="/recommend">
+                    Recommend
+                </a>
+
+                <a href="/watchlist">
+                    Watchlist
+                </a>
+
+            </nav>
+
+            <div class="nav-search">
+
+                <input
+                    type="search"
+                    id="globalSearch"
+                    placeholder="Search movies..."
+                    autocomplete="off"
+                    aria-label="Search movies"
+                >
+
+                <button
+                    type="button"
+                    id="globalSearchButton"
+                    class="search-btn"
+                    aria-label="Search"
+                >
+                    🔍
+                </button>
+
+            </div>
+
+            <!-- AUTH NAVIGATION -->
+            <div class="nav-auth">
+                {% if current_user %}
+                    <div class="user-menu">
+                        <div class="user-badge" title="{{ current_user.email }}">
+                            <span class="user-avatar">{{ current_user.username[:1].upper() }}</span>
+                            <span class="user-name">{{ current_user.username }}</span>
+                        </div>
+                        <a href="/signout" class="auth-btn auth-signout-btn" title="Sign Out">Sign Out</a>
+                    </div>
+                {% else %}
+                    <a href="/signin" class="auth-btn auth-signin-btn">Sign In</a>
+                    <a href="/signup" class="auth-btn auth-signup-btn">Sign Up</a>
+                {% endif %}
+            </div>
+
+        </div>
+
+    </header>
+
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-toast-container">
+                {% for category, message in messages %}
+                    <div class="flash-toast toast-{{ category }}">
+                        <span>
+                            {% if category == 'success' %}✓{% elif category == 'error' %}⚠️{% else %}ℹ️{% endif %}
+                        </span>
+                        <span>{{ message }}</span>
+                        <button type="button" class="flash-toast-close" aria-label="Close">✕</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+
+    <!-- =========================
+         MAIN CONTENT
+    ========================== -->
+    <main id="discoverApp">
+
+        <!-- Hero -->
+        <section class="discover-hero">
+
+            <div class="discover-hero-content">
+
+                <span class="section-kicker">
+                    FIND YOUR NEXT MOVIE
+                </span>
+
+                <h1>
+                    Discover
+                    <span>Something New.</span>
+                </h1>
+
+                <p>
+                    Explore thousands of movies and TV shows.
+                    Filter them exactly the way you want.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- Search Results -->
+        <section
+            id="searchResultsSection"
+            class="section search-results-section hidden"
+        >
+
+            <div class="section-container">
+
+                <div class="section-heading">
+
+                    <span class="section-kicker">
+                        SEARCH
+                    </span>
+
+                    <h2
+                        id="searchResultsTitle"
+                        class="section-title"
+                    >
+                        Search Results
+                    </h2>
+
+                </div>
+
+                <div
+                    id="searchResultsGrid"
+                    class="movie-grid"
+                ></div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Filters -->
+        <section class="section discover-filter-section">
+
+            <div class="section-container">
+
+                <div class="section-heading">
+
+                    <span class="section-kicker">
+                        EXPLORE
+                    </span>
+
+                    <h2 class="section-title">
+                        Find Something Specific
+                    </h2>
+
+                    <p class="section-subtitle">
+                        Mix and match filters to narrow down your choices.
+                    </p>
+
+                </div>
+
+
+                <div class="discover-filters">
+
+                    <!-- Type -->
+                    <div class="filter-group">
+
+                        <label for="discoverType">
+                            Type
+                        </label>
+
+                        <select id="discoverType">
+
+                            <option value="movie">
+                                Movies
+                            </option>
+
+                            <option value="tv">
+                                TV Shows
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- Genre -->
+                    <div class="filter-group">
+
+                        <label for="discoverGenre">
+                            Genre
+                        </label>
+
+                        <select id="discoverGenre">
+
+                            <option value="">
+                                All Genres
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- Year -->
+                    <div class="filter-group">
+
+                        <label for="discoverYear">
+                            Year
+                        </label>
+
+                        <select id="discoverYear">
+
+                            <option value="">
+                                Any Year
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- Minimum Rating -->
+                    <div class="filter-group">
+
+                        <label for="discoverRating">
+                            Minimum Rating
+                        </label>
+
+                        <select id="discoverRating">
+
+                            <option value="">
+                                Any Rating
+                            </option>
+
+                            <option value="5">
+                                5+
+                            </option>
+
+                            <option value="6">
+                                6+
+                            </option>
+
+                            <option value="7">
+                                7+
+                            </option>
+
+                            <option value="8">
+                                8+
+                            </option>
+
+                            <option value="9">
+                                9+
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- Language -->
+                    <div class="filter-group">
+
+                        <label for="discoverLanguage">
+                            Language
+                        </label>
+
+                        <select id="discoverLanguage">
+
+                            <option value="">
+                                Any Language
+                            </option>
+
+                            <option value="en">
+                                English
+                            </option>
+
+                            <option value="ta">
+                                Tamil
+                            </option>
+
+                            <option value="hi">
+                                Hindi
+                            </option>
+
+                            <option value="te">
+                                Telugu
+                            </option>
+
+                            <option value="ml">
+                                Malayalam
+                            </option>
+
+                            <option value="kn">
+                                Kannada
+                            </option>
+
+                            <option value="ko">
+                                Korean
+                            </option>
+
+                            <option value="ja">
+                                Japanese
+                            </option>
+
+                            <option value="fr">
+                                French
+                            </option>
+
+                            <option value="es">
+                                Spanish
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- Sort -->
+                    <div class="filter-group">
+
+                        <label for="discoverSort">
+                            Sort By
+                        </label>
+
+                        <select id="discoverSort">
+
+                            <option value="popularity.desc">
+                                Popularity
+                            </option>
+
+                            <option value="vote_average.desc">
+                                Highest Rated
+                            </option>
+
+                            <option value="primary_release_date.desc">
+                                Newest
+                            </option>
+
+                            <option value="primary_release_date.asc">
+                                Oldest
+                            </option>
+
+                            <option value="vote_count.desc">
+                                Most Voted
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Filter Actions -->
+                <div class="discover-filter-actions">
+
+                    <button
+                        type="button"
+                        id="applyFiltersButton"
+                        class="primary-button"
+                    >
+                        🔍 Discover Movies
+                    </button>
+
+                    <button
+                        type="button"
+                        id="clearFiltersButton"
+                        class="secondary-button"
+                    >
+                        Clear Filters
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Quick Categories -->
+        <section class="section discover-categories-section">
+
+            <div class="section-container">
+
+                <div class="section-heading">
+
+                    <span class="section-kicker">
+                        QUICK PICKS
+                    </span>
+
+                    <h2 class="section-title">
+                        Explore Popular Categories
+                    </h2>
+
+                </div>
+
+
+                <div
+                    id="discoverGenreButtons"
+                    class="genre-buttons"
+                >
+
+                    <!-- Genre buttons inserted by JavaScript -->
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Results -->
+        <section class="section discover-results-section">
+
+            <div class="section-container">
+
+                <div class="section-heading discover-results-heading">
+
+                    <div>
+
+                        <span class="section-kicker">
+                            RESULTS
+                        </span>
+
+                        <h2
+                            id="discoverResultsTitle"
+                            class="section-title"
+                        >
+                            Popular Movies
+                        </h2>
+
+                    </div>
+
+                    <span
+                        id="discoverResultCount"
+                        class="result-count"
+                    >
+                        0 results
+                    </span>
+
+                </div>
+
+
+                <div
+                    id="discoverMovieGrid"
+                    class="movie-grid"
+                ></div>
+
+
+                <!-- Pagination -->
+                <div
+                    id="discoverPagination"
+                    class="pagination"
+                >
+
+                    <button
+                        type="button"
+                        id="previousPageButton"
+                        class="secondary-button"
+                        disabled
+                    >
+                        ← Previous
+                    </button>
+
+                    <span id="discoverPageNumber">
+                        Page 1
+                    </span>
+
+                    <button
+                        type="button"
+                        id="nextPageButton"
+                        class="secondary-button"
+                    >
+                        Next →
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Loading -->
+        <div
+            id="discoverLoading"
+            class="loading hidden"
+        >
+
+            <div class="spinner"></div>
+
+            <p>
+                Discovering movies...
+            </p>
+
+        </div>
+
+
+        <!-- Error -->
+        <div
+            id="discoverError"
+            class="error-message hidden"
+        >
+
+            <h2>
+                Discovery failed
+            </h2>
+
+            <p id="discoverErrorText">
+                We couldn't load movies right now.
+            </p>
+
+        </div>
+
+    </main>
+
+
+    <!-- =========================
+         FOOTER
+    ========================== -->
+    <footer class="site-footer">
+
+        <div class="footer-container">
+
+            <div class="footer-brand">
+
+                <a href="/" class="logo">
+                    Drawn<span>Nightfall</span>
+                </a>
+
+                <p>
+                    Discover movies. Find your next obsession.
+                </p>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h3>
+                    Explore
+                </h3>
+
+                <a href="/">
+                    Home
+                </a>
+
+                <a href="/discover">
+                    Discover
+                </a>
+
+                <a href="/roulette">
+                    Movie Roulette
+                </a>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h3>
+                    Tools
+                </h3>
+
+                <a href="/mood">
+                    Mood
+                </a>
+
+                <a href="/compare">
+                    Compare
+                </a>
+
+                <a href="/recommend">
+                    Recommend
+                </a>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h3>
+                    My Movies
+                </h3>
+
+                <a href="/watchlist">
+                    Watchlist
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <div class="footer-bottom">
+
+            <p>
+                © 2026 DrawnNightfall. Built for movie lovers.
+            </p>
+
+            <p>
+                Movie data powered by TMDB.
+            </p>
+
+        </div>
+
+    </footer>
+
+
+    <!-- =========================
+         JAVASCRIPT
+    ========================== -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/discover.js') }}"></script>
+
+</body>
+</html>

@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Movie Details — DrawnNightfall</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/movie-details.css') }}"
+    >
+
+</head>
+
+<body>
+
+    <!-- =====================================================
+         NAVBAR
+    ====================================================== -->
+
+    <header class="navbar">
+
+        <div class="nav-container">
+
+            <a href="/" class="logo">
+                Drawn<span>Nightfall</span>
+            </a>
+
+            <nav class="nav-links">
+
+                <a href="/">
+                    Home
+                </a>
+
+                <a href="/discover">
+                    Discover
+                </a>
+
+                <a href="/mood">
+                    Mood
+                </a>
+
+                <a href="/compare">
+                    Compare
+                </a>
+
+                <a href="/watchlist">
+                    Watchlist
+                </a>
+
+                <a href="/recommend">
+                    Recommend
+                </a>
+
+                <a href="/roulette">
+                    Roulette
+                </a>
+
+            </nav>
+
+            <div class="nav-search">
+
+                <input
+                    id="movieSearch"
+                    type="text"
+                    placeholder="Search movies..."
+                    autocomplete="off"
+                >
+
+                <button
+                    id="movieSearchButton"
+                    class="search-btn"
+                    type="button"
+                >
+                    Search
+                </button>
+
+            </div>
+
+            <!-- AUTH NAVIGATION -->
+            <div class="nav-auth">
+                {% if current_user %}
+                    <div class="user-menu">
+                        <div class="user-badge" title="{{ current_user.email }}">
+                            <span class="user-avatar">{{ current_user.username[:1].upper() }}</span>
+                            <span class="user-name">{{ current_user.username }}</span>
+                        </div>
+                        <a href="/signout" class="auth-btn auth-signout-btn" title="Sign Out">Sign Out</a>
+                    </div>
+                {% else %}
+                    <a href="/signin" class="auth-btn auth-signin-btn">Sign In</a>
+                    <a href="/signup" class="auth-btn auth-signup-btn">Sign Up</a>
+                {% endif %}
+            </div>
+
+        </div>
+
+    </header>
+
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-toast-container">
+                {% for category, message in messages %}
+                    <div class="flash-toast toast-{{ category }}">
+                        <span>
+                            {% if category == 'success' %}✓{% elif category == 'error' %}⚠️{% else %}ℹ️{% endif %}
+                        </span>
+                        <span>{{ message }}</span>
+                        <button type="button" class="flash-toast-close" aria-label="Close">✕</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+
+    <!-- =====================================================
+         MOVIE DETAILS APP
+    ====================================================== -->
+
+    <main id="movieDetailsApp">
+
+
+        <!-- =================================================
+             LOADING
+        ================================================== -->
+
+        <section
+            id="movieLoading"
+            class="movie-loading"
+        >
+
+            <div class="spinner"></div>
+
+            <p>
+                Loading movie...
+            </p>
+
+        </section>
+
+
+        <!-- =================================================
+             ERROR
+        ================================================== -->
+
+        <section
+            id="movieError"
+            class="movie-error hidden"
+        >
+
+            <h1>
+                Movie not found
+            </h1>
+
+            <p id="movieErrorText">
+                We couldn't load this movie.
+            </p>
+
+            <a
+                href="/"
+                class="btn btn-primary"
+            >
+                Back to Home
+            </a>
+
+        </section>
+
+
+        <!-- =================================================
+             MOVIE HERO
+        ================================================== -->
+
+        <section
+            id="movieHero"
+            class="movie-hero hidden"
+        >
+
+            <div
+                id="movieBackdrop"
+                class="movie-backdrop"
+            ></div>
+
+            <div class="movie-backdrop-overlay"></div>
+
+            <div class="movie-hero-content">
+
+                <!-- Poster -->
+
+                <div class="movie-poster-wrapper">
+
+                    <img
+                        id="moviePoster"
+                        class="movie-poster"
+                        src=""
+                        alt=""
+                    >
+
+                </div>
+
+
+                <!-- Main information -->
+
+                <div class="movie-main-info">
+
+                    <div class="movie-title-row">
+
+                        <div>
+
+                            <span
+                                id="movieKicker"
+                                class="movie-kicker"
+                            >
+                                MOVIE
+                            </span>
+
+                            <h1
+                                id="movieTitle"
+                                class="movie-title"
+                            >
+                                Movie Title
+                            </h1>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Meta -->
+
+                    <div
+                        id="movieMeta"
+                        class="movie-meta"
+                    ></div>
+
+
+                    <!-- Genres -->
+
+                    <div
+                        id="movieGenres"
+                        class="movie-genres"
+                    ></div>
+
+
+                    <!-- Tagline -->
+
+                    <p
+                        id="movieTagline"
+                        class="movie-tagline hidden"
+                    ></p>
+
+
+                    <!-- Overview -->
+
+                    <div class="movie-overview">
+
+                        <h2>
+                            Overview
+                        </h2>
+
+                        <p id="movieOverview">
+                            Loading overview...
+                        </p>
+
+                    </div>
+
+
+                    <!-- Actions -->
+
+                    <div class="movie-actions">
+
+                        <button
+                            id="trailerButton"
+                            class="btn btn-primary"
+                            type="button"
+                        >
+                            ▶ Watch Trailer
+                        </button>
+
+                        <button
+                            id="watchlistButton"
+                            class="btn btn-secondary"
+                            type="button"
+                        >
+                            ♡ Add to Watchlist
+                        </button>
+
+                        <button
+                            id="compareButton"
+                            class="btn btn-secondary"
+                            type="button"
+                        >
+                            ⚔ Compare
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             DETAILS
+        ================================================== -->
+
+        <section
+            id="movieInformation"
+            class="movie-information hidden"
+        >
+
+            <div class="movie-information-grid">
+
+
+                <!-- LEFT -->
+
+                <div class="movie-information-main">
+
+
+                    <!-- DIRECTOR -->
+
+                    <section class="movie-detail-section">
+
+                        <span class="section-kicker">
+                            CREATIVE TEAM
+                        </span>
+
+                        <h2>
+                            Director
+                        </h2>
+
+                        <div
+                            id="directorContainer"
+                            class="director-container"
+                        ></div>
+
+                    </section>
+
+
+                    <!-- CAST -->
+
+                    <section class="movie-detail-section">
+
+                        <span class="section-kicker">
+                            CAST
+                        </span>
+
+                        <h2>
+                            Main Cast
+                        </h2>
+
+                        <div
+                            id="castGrid"
+                            class="cast-grid"
+                        ></div>
+
+                    </section>
+
+
+                    <!-- SIMILAR MOVIES -->
+
+                    <section class="movie-detail-section">
+
+                        <div class="section-heading">
+
+                            <div>
+
+                                <span class="section-kicker">
+                                    YOU MAY ALSO LIKE
+                                </span>
+
+                                <h2>
+                                    Similar Movies
+                                </h2>
+
+                            </div>
+
+                        </div>
+
+                        <div
+                            id="similarMoviesGrid"
+                            class="movie-grid"
+                        ></div>
+
+                    </section>
+
+                </div>
+
+
+                <!-- RIGHT SIDEBAR -->
+
+                <aside class="movie-sidebar">
+
+
+                    <!-- SCORE -->
+
+                    <div class="movie-stat-card">
+
+                        <span class="stat-label">
+                            DRAWNNIGHTFALL RATING
+                        </span>
+
+                        <div class="movie-score">
+
+                            <span
+                                id="movieRating"
+                                class="score-number"
+                            >
+                                —
+                            </span>
+
+                            <span class="score-max">
+                                / 10
+                            </span>
+
+                        </div>
+
+                        <p id="movieVoteCount">
+                            —
+                        </p>
+
+                    </div>
+
+
+                    <!-- RELEASE -->
+
+                    <div class="movie-stat-card">
+
+                        <span class="stat-label">
+                            RELEASE DATE
+                        </span>
+
+                        <strong id="movieReleaseDate">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <!-- RUNTIME -->
+
+                    <div class="movie-stat-card">
+
+                        <span class="stat-label">
+                            RUNTIME
+                        </span>
+
+                        <strong id="movieRuntime">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <!-- LANGUAGE -->
+
+                    <div class="movie-stat-card">
+
+                        <span class="stat-label">
+                            ORIGINAL LANGUAGE
+                        </span>
+
+                        <strong id="movieLanguage">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <!-- STATUS -->
+
+                    <div class="movie-stat-card">
+
+                        <span class="stat-label">
+                            STATUS
+                        </span>
+
+                        <strong id="movieStatus">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                </aside>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =====================================================
+         TRAILER MODAL
+    ====================================================== -->
+
+    <div
+        id="trailerModal"
+        class="modal hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="trailerModalTitle"
+    >
+
+        <div
+            id="trailerBackdrop"
+            class="modal-backdrop"
+        ></div>
+
+        <div class="modal-content trailer-modal-content">
+
+            <div class="modal-header">
+
+                <h2 id="trailerModalTitle">
+                    Movie Trailer
+                </h2>
+
+                <button
+                    id="closeTrailerModal"
+                    class="modal-close"
+                    type="button"
+                    aria-label="Close trailer"
+                >
+                    ×
+                </button>
+
+            </div>
+
+            <div class="trailer-player-wrapper">
+
+                <div
+                    id="trailerPlayer"
+                    class="trailer-player"
+                ></div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <footer class="footer">
+
+        <div class="footer-container">
+
+            <div class="footer-brand">
+
+                <a href="/" class="logo">
+                    Drawn<span>Nightfall</span>
+                </a>
+
+                <p>
+                    Discover movies worth remembering.
+                </p>
+
+            </div>
+
+            <div class="footer-links">
+
+                <a href="/">
+                    Home
+                </a>
+
+                <a href="/discover">
+                    Discover
+                </a>
+
+                <a href="/mood">
+                    Mood
+                </a>
+
+                <a href="/compare">
+                    Compare
+                </a>
+
+                <a href="/watchlist">
+                    Watchlist
+                </a>
+
+                <a href="/recommend">
+                    Recommend
+                </a>
+
+                <a href="/roulette">
+                    Roulette
+                </a>
+
+            </div>
+
+        </div>
+
+        <div class="footer-bottom">
+
+            <p>
+                © 2026 DrawnNightfall
+            </p>
+
+            <p>
+                Movie data provided by TMDB.
+            </p>
+
+        </div>
+
+    </footer>
+
+
+    <!-- =====================================================
+         JAVASCRIPT
+    ====================================================== -->
+
+    <script
+        src="{{ url_for('static', filename='js/main.js') }}"
+    ></script>
+
+    <script
+        src="{{ url_for('static', filename='js/movie-details.js') }}"
+    ></script>
+
+</body>
+
+</html>

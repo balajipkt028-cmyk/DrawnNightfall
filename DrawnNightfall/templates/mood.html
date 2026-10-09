@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Movie Mood — DrawnNightfall</title>
+
+    <meta
+        name="description"
+        content="Choose your mood and discover movies that match how you feel."
+    >
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mood.css') }}">
+</head>
+
+<body>
+
+    <!-- =========================
+         NAVBAR
+    ========================== -->
+    <header class="navbar">
+
+        <div class="nav-container">
+
+            <a href="/" class="logo">
+                Drawn<span>Nightfall</span>
+            </a>
+
+            <nav class="nav-links" aria-label="Main navigation">
+
+                <a href="/">Home</a>
+
+                <a href="/discover">
+                    Discover
+                </a>
+
+                <a href="/roulette">
+                    Roulette
+                </a>
+
+                <a href="/mood" class="active">
+                    Mood
+                </a>
+
+                <a href="/compare">
+                    Compare
+                </a>
+
+                <a href="/recommend">
+                    Recommend
+                </a>
+
+                <a href="/watchlist">
+                    Watchlist
+                </a>
+
+            </nav>
+
+            <div class="nav-search">
+
+                <input
+                    type="search"
+                    id="globalSearch"
+                    placeholder="Search movies..."
+                    autocomplete="off"
+                    aria-label="Search movies"
+                >
+
+                <button
+                    type="button"
+                    id="globalSearchButton"
+                    class="search-btn"
+                    aria-label="Search"
+                >
+                    🔍
+                </button>
+
+            </div>
+
+            <!-- AUTH NAVIGATION -->
+            <div class="nav-auth">
+                {% if current_user %}
+                    <div class="user-menu">
+                        <div class="user-badge" title="{{ current_user.email }}">
+                            <span class="user-avatar">{{ current_user.username[:1].upper() }}</span>
+                            <span class="user-name">{{ current_user.username }}</span>
+                        </div>
+                        <a href="/signout" class="auth-btn auth-signout-btn" title="Sign Out">Sign Out</a>
+                    </div>
+                {% else %}
+                    <a href="/signin" class="auth-btn auth-signin-btn">Sign In</a>
+                    <a href="/signup" class="auth-btn auth-signup-btn">Sign Up</a>
+                {% endif %}
+            </div>
+
+        </div>
+
+    </header>
+
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-toast-container">
+                {% for category, message in messages %}
+                    <div class="flash-toast toast-{{ category }}">
+                        <span>
+                            {% if category == 'success' %}✓{% elif category == 'error' %}⚠️{% else %}ℹ️{% endif %}
+                        </span>
+                        <span>{{ message }}</span>
+                        <button type="button" class="flash-toast-close" aria-label="Close">✕</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+
+    <!-- =========================
+         MAIN CONTENT
+    ========================== -->
+    <main id="moodApp">
+
+        <!-- Mood Hero -->
+        <section class="mood-hero">
+
+            <div class="mood-hero-content">
+
+                <span class="section-kicker">
+                    MOVIES BY FEELING
+                </span>
+
+                <h1>
+                    What's Your
+                    <span>Mood?</span>
+                </h1>
+
+                <p>
+                    Tell us how you feel.
+                    We'll find something worth watching.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- Mood Selection -->
+        <section class="section mood-selection-section">
+
+            <div class="section-container">
+
+                <div class="section-heading centered">
+
+                    <span class="section-kicker">
+                        PICK ONE
+                    </span>
+
+                    <h2 class="section-title">
+                        Choose Your Mood
+                    </h2>
+
+                    <p class="section-subtitle">
+                        Your mood changes the kind of story you want.
+                    </p>
+
+                </div>
+
+
+                <div
+                    id="moodGrid"
+                    class="mood-grid"
+                >
+
+                    <!-- Happy -->
+                    <button
+                        type="button"
+                        class="mood-card"
+                        data-mood="happy"
+                    >
+                        <span class="mood-icon">
+                            ☀️
+                        </span>
+
+                        <span class="mood-name">
+                            Happy
+                        </span>
+
+                        <span class="mood-description">
+                            Something cheerful and uplifting
+                        </span>
+                    </button>
+
+
+                    <!-- Emotional -->
+                    <button
+                        type="button"
+                        class="mood-card"
+                        data-mood="emotional"
+                    >
+                        <span class="mood-icon">
+                            💔
+                        </span>
+
+                        <span class="mood-name">
+                            Emotional
+                        </span>
+
+                        <span class="mood-description">
+                            Stories that hit you right in the heart
+                        </span>
+                    </button>
+
+
+                    <!-- Scary -->
+                    <button
+                        type="button"
+                        class="mood-card"
+                        data-mood="scary"
+                    >
+                        <span class="mood-icon">
+                            👻
+                        </span>
+
+                        <span class="mood-name">
+                            Scary
+                        </span>
+
+                        <span class="mood-description">
+                            Fear, horror and nightmares
+                        </span>
+                    </button>
+
+
+                    <!-- Exciting -->
+                    <button
+                        type="button"
+                        class="mood-card"
+                        data-mood="exciting"
+                    >
+                        <span class="mood-icon">
+                            ⚡
+                        </span>
+
+                        <span class="mood-name">
+                            Exciting
+                        </span>
+
+                        <span class="mood-description">
+                            Action, adventure and adrenaline
+                        </span>
+                    </button>
+
+
+                    <!-- Romantic -->
+                    <button
+                        type="button"
+                        class="mood-card"
+                        data-mood="romantic"
+                    >
+                        <span class="mood-icon">
+                            ❤️
+                        </span>
+
+                        <span class="mood-name">
+                            Romantic
+                        </span>
+
+                        <span class="mood-description">
+                            Love stories and relationships
+                        </span>
+                    </button>
+
+
+                    <!-- Thoughtful -->
+                    <button
+                        type="button"
+                        class="mood-card"
+                        data-mood="thoughtful"
+                    >
+                        <span class="mood-icon">
+                            🧠
+                        </span>
+
+                        <span class="mood-name">
+                            Thoughtful
+                        </span>
+
+                        <span class="mood-description">
+                            Movies that make you think
+                        </span>
+                    </button>
+
+
+                    <!-- Funny -->
+                    <button
+                        type="button"
+                        class="mood-card"
+                        data-mood="funny"
+                    >
+                        <span class="mood-icon">
+                            😂
+                        </span>
+
+                        <span class="mood-name">
+                            Funny
+                        </span>
+
+                        <span class="mood-description">
+                            Comedy and good vibes
+                        </span>
+                    </button>
+
+
+                    <!-- Dark -->
+                    <button
+                        type="button"
+                        class="mood-card"
+                        data-mood="dark"
+                    >
+                        <span class="mood-icon">
+                            🌑
+                        </span>
+
+                        <span class="mood-name">
+                            Dark
+                        </span>
+
+                        <span class="mood-description">
+                            Crime, thrillers and darker stories
+                        </span>
+                    </button>
+
+
+                    <!-- Feel Good -->
+                    <button
+                        type="button"
+                        class="mood-card"
+                        data-mood="feel-good"
+                    >
+                        <span class="mood-icon">
+                            🌈
+                        </span>
+
+                        <span class="mood-name">
+                            Feel-Good
+                        </span>
+
+                        <span class="mood-description">
+                            Warm, positive and comforting
+                        </span>
+                    </button>
+
+
+                    <!-- Disturbing -->
+                    <button
+                        type="button"
+                        class="mood-card"
+                        data-mood="disturbing"
+                    >
+                        <span class="mood-icon">
+                            🩸
+                        </span>
+
+                        <span class="mood-name">
+                            Disturbing
+                        </span>
+
+                        <span class="mood-description">
+                            Uncomfortable, intense and unsettling
+                        </span>
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Mood Results -->
+        <section
+            id="moodResultsSection"
+            class="section mood-results-section hidden"
+        >
+
+            <div class="section-container">
+
+                <div class="section-heading">
+
+                    <span
+                        id="moodResultsKicker"
+                        class="section-kicker"
+                    >
+                        YOUR MOOD
+                    </span>
+
+                    <h2
+                        id="moodResultsTitle"
+                        class="section-title"
+                    >
+                        Movies For You
+                    </h2>
+
+                    <p
+                        id="moodResultsSubtitle"
+                        class="section-subtitle"
+                    >
+                        Movies selected based on your mood.
+                    </p>
+
+                </div>
+
+
+                <div
+                    id="moodMovieGrid"
+                    class="movie-grid"
+                ></div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Loading -->
+        <div
+            id="moodLoading"
+            class="loading hidden"
+        >
+
+            <div class="spinner"></div>
+
+            <p>
+                Finding movies for your mood...
+            </p>
+
+        </div>
+
+
+        <!-- Error -->
+        <div
+            id="moodError"
+            class="error-message hidden"
+        >
+
+            <h2>
+                We lost the mood.
+            </h2>
+
+            <p id="moodErrorText">
+                We couldn't find movies for this mood.
+            </p>
+
+        </div>
+
+    </main>
+
+
+    <!-- =========================
+         FOOTER
+    ========================== -->
+    <footer class="site-footer">
+
+        <div class="footer-container">
+
+            <div class="footer-brand">
+
+                <a href="/" class="logo">
+                    Drawn<span>Nightfall</span>
+                </a>
+
+                <p>
+                    Discover movies. Find your next obsession.
+                </p>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h3>
+                    Explore
+                </h3>
+
+                <a href="/">
+                    Home
+                </a>
+
+                <a href="/discover">
+                    Discover
+                </a>
+
+                <a href="/roulette">
+                    Movie Roulette
+                </a>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h3>
+                    Tools
+                </h3>
+
+                <a href="/mood">
+                    Mood
+                </a>
+
+                <a href="/compare">
+                    Compare
+                </a>
+
+                <a href="/recommend">
+                    Recommend
+                </a>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h3>
+                    My Movies
+                </h3>
+
+                <a href="/watchlist">
+                    Watchlist
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <div class="footer-bottom">
+
+            <p>
+                © 2026 DrawnNightfall. Built for movie lovers.
+            </p>
+
+            <p>
+                Movie data powered by TMDB.
+            </p>
+
+        </div>
+
+    </footer>
+
+
+    <!-- =========================
+         JAVASCRIPT
+    ========================== -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/mood.js') }}"></script>
+
+</body>
+</html>

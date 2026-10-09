@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Watchlist — DrawnNightfall</title>
+
+    <meta
+        name="description"
+        content="Your personal movie watchlist on DrawnNightfall."
+    >
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/watchlist.css') }}">
+</head>
+
+<body>
+
+    <!-- =========================
+         NAVBAR
+    ========================== -->
+    <header class="navbar">
+
+        <div class="nav-container">
+
+            <a href="/" class="logo">
+                Drawn<span>Nightfall</span>
+            </a>
+
+            <nav class="nav-links" aria-label="Main navigation">
+                <a href="/">Home</a>
+                <a href="/discover">Discover</a>
+                <a href="/roulette">Roulette</a>
+                <a href="/mood">Mood</a>
+                <a href="/compare">Compare</a>
+                <a href="/recommend">Recommend</a>
+                <a href="/watchlist" class="active">Watchlist</a>
+            </nav>
+
+            <div class="nav-search">
+
+                <input
+                    type="search"
+                    id="globalSearch"
+                    placeholder="Search movies..."
+                    autocomplete="off"
+                    aria-label="Search movies"
+                >
+
+                <button
+                    type="button"
+                    id="globalSearchButton"
+                    class="search-btn"
+                    aria-label="Search"
+                >
+                    🔍
+                </button>
+
+            </div>
+
+            <!-- AUTH NAVIGATION -->
+            <div class="nav-auth">
+                {% if current_user %}
+                    <div class="user-menu">
+                        <div class="user-badge" title="{{ current_user.email }}">
+                            <span class="user-avatar">{{ current_user.username[:1].upper() }}</span>
+                            <span class="user-name">{{ current_user.username }}</span>
+                        </div>
+                        <a href="/signout" class="auth-btn auth-signout-btn" title="Sign Out">Sign Out</a>
+                    </div>
+                {% else %}
+                    <a href="/signin" class="auth-btn auth-signin-btn">Sign In</a>
+                    <a href="/signup" class="auth-btn auth-signup-btn">Sign Up</a>
+                {% endif %}
+            </div>
+
+        </div>
+
+    </header>
+
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-toast-container">
+                {% for category, message in messages %}
+                    <div class="flash-toast toast-{{ category }}">
+                        <span>
+                            {% if category == 'success' %}✓{% elif category == 'error' %}⚠️{% else %}ℹ️{% endif %}
+                        </span>
+                        <span>{{ message }}</span>
+                        <button type="button" class="flash-toast-close" aria-label="Close">✕</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+
+    <!-- =========================
+         MAIN CONTENT
+    ========================== -->
+    <main id="watchlistApp">
+
+        <!-- Page Header -->
+        <section class="section watchlist-header">
+
+            <div class="section-container">
+
+                <div class="section-heading">
+
+                    <span class="section-kicker">
+                        YOUR COLLECTION
+                    </span>
+
+                    <h1 class="section-title">
+                        My Watchlist
+                    </h1>
+
+                    <p class="section-subtitle">
+                        Movies you've saved for your next movie night.
+                    </p>
+
+                </div>
+
+                <div class="watchlist-summary">
+
+                    <span id="watchlistCount">
+                        0 movies
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Search Results -->
+        <section
+            id="searchResultsSection"
+            class="section search-results-section hidden"
+        >
+
+            <div class="section-container">
+
+                <div class="section-heading">
+
+                    <span class="section-kicker">
+                        SEARCH
+                    </span>
+
+                    <h2
+                        id="searchResultsTitle"
+                        class="section-title"
+                    >
+                        Search Results
+                    </h2>
+
+                </div>
+
+                <div
+                    id="searchResultsGrid"
+                    class="movie-grid"
+                ></div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Watchlist -->
+        <section class="section watchlist-section">
+
+            <div class="section-container">
+
+                <div
+                    id="watchlistGrid"
+                    class="movie-grid watchlist-grid"
+                ></div>
+
+
+                <!-- Empty Watchlist -->
+                <div
+                    id="emptyWatchlist"
+                    class="empty-state hidden"
+                >
+
+                    <div class="empty-state-icon">
+                        🎬
+                    </div>
+
+                    <h2>
+                        Your watchlist is empty
+                    </h2>
+
+                    <p>
+                        Find a movie you love and save it here
+                        for later.
+                    </p>
+
+                    <a
+                        href="/discover"
+                        class="primary-button"
+                    >
+                        Discover Movies
+                    </a>
+
+                </div>
+
+
+                <!-- Loading -->
+                <div
+                    id="watchlistLoading"
+                    class="loading hidden"
+                >
+
+                    <div class="spinner"></div>
+
+                    <p>
+                        Loading your watchlist...
+                    </p>
+
+                </div>
+
+
+                <!-- Error -->
+                <div
+                    id="watchlistError"
+                    class="error-message hidden"
+                >
+
+                    <h2>
+                        Something went wrong
+                    </h2>
+
+                    <p id="watchlistErrorText">
+                        We couldn't load your watchlist.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================
+         FOOTER
+    ========================== -->
+    <footer class="site-footer">
+
+        <div class="footer-container">
+
+            <div class="footer-brand">
+
+                <a href="/" class="logo">
+                    Drawn<span>Nightfall</span>
+                </a>
+
+                <p>
+                    Discover movies. Find your next obsession.
+                </p>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h3>
+                    Explore
+                </h3>
+
+                <a href="/">
+                    Home
+                </a>
+
+                <a href="/discover">
+                    Discover
+                </a>
+
+                <a href="/roulette">
+                    Movie Roulette
+                </a>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h3>
+                    Tools
+                </h3>
+
+                <a href="/mood">
+                    Mood
+                </a>
+
+                <a href="/compare">
+                    Compare
+                </a>
+
+                <a href="/recommend">
+                    Recommend
+                </a>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h3>
+                    My Movies
+                </h3>
+
+                <a href="/watchlist">
+                    Watchlist
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <div class="footer-bottom">
+
+            <p>
+                © 2026 DrawnNightfall. Built for movie lovers.
+            </p>
+
+            <p>
+                Movie data powered by TMDB.
+            </p>
+
+        </div>
+
+    </footer>
+
+
+    <!-- =========================
+         JAVASCRIPT
+    ========================== -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/watchlist.js') }}"></script>
+
+</body>
+</html>
